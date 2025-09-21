@@ -3,14 +3,7 @@ from typing import Callable
 
 class ModeManager:
     """
-    يختار بين Offline/Online.
-    - يتابع حدث NET_STATUS من الـBus: data={"online": True/False}
-    - ويدعم is_online_provider() كخيار بديل عند start() فقط.
-    الأوضاع لازم توفّر:
-      - start()
-      - stop() (اختياري)
-      - name() -> str
-    """
+
     def __init__(self, bus, offline_mode, online_mode=None,
                  is_online_provider: Callable[[], bool] = lambda: False):
         self.bus = bus
@@ -82,3 +75,4 @@ class ModeManager:
 
     def current(self) -> str:
         return self._active.name() if self._active else "none"
+
