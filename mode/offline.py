@@ -1,4 +1,4 @@
-# mode/offline.py
+
 from typing import List, Optional
 from core import events as E
 
@@ -120,3 +120,4 @@ class OfflineOrchestrator:
             self.session_store.save_state({"mode": "Offline", "lineIndex": self.line_index})
         except Exception:
             pass
+
