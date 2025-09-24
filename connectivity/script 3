@@ -1,0 +1,53 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import argparse, logging, time
+from pathlib import Path
+
+from service.logging_setup import setup_logging
+from connectivity.network import handle_frame
+
+try:
+    from picamera2 import Picamera2
+    from libcamera import controls  # autofocus enums
+except Exception:
+    Picamera2 = None  # type: ignore
+    controls = None   # type: ignore
+
+def capture_frame(save: Path | None):
+    if Picamera2 is None:
+        raise RuntimeError("python3-picamera2 not installed")
+    cam = Picamera2()
+    cam.configure(cam.create_preview_configuration(main={"format":"RGB888"}))
+    cam.start()
+    # autofocus (if supported)
+    try:
+        if controls is not None:
+            cam.set_controls({
+                "AfMode": controls.AfModeEnum.Continuous,
+                "AfSpeed": controls.AfSpeedEnum.Fast,
+            })
+            time.sleep(0.6)
+            cam.set_controls({"AfTrigger": controls.AfTrigger.Start})
+            time.sleep(0.6)
+    except Exception:
+        pass
+    # small warmup for exposure/gain
+    time.sleep(0.6)
+    frame = cam.capture_array()
+    if save:
+        import cv2; cv2.imwrite(str(save), frame)
+    cam.close()
+    return frame
+
+def main() -> int:
+    ap = argparse.ArgumentParser(description="Pi camera one-shot → QR classify → connect if WIFI.")
+    ap.add_argument("--save", type=Path, default=None, help="Save captured frame for debugging")
+    args = ap.parse_args()
+    setup_logging(logging.INFO)
+    frame = capture_frame(args.save)
+    handle_frame(frame)  # logs events + (optional) beeps
+    return 0
+
+if __name__ == "__main__":
+    raise SystemExit(main())
