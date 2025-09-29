@@ -1,42 +1,78 @@
-# main.py
+import logging
 from core.bus import EventBus
-from core import events as E
-from services.tts import TTS
-from core.storage import SessionStore
-from mode.offline import OfflineOrchestrator
-from mode.mode_manager import ModeManager
-from services.io.buttons import Buttons
-from services.camera.camera import Camera
-from services.io.volume import Volume
+from core.config import APP_NAME
+from core.events import BTN_CAPTURE_SHORT
+from core.storge import SessionStore
+from mode.mode_manger import ModeManager
+from services.audio import BeepService
+from services.camera import CameraService
+from services.vision import VisionService
+from connectivity.network import handle_frame
+
+from offline import OfflineOrchestrator
+from online import OnlineOrchestrator  # placeholder مؤقت للأونلاين مود
 
 def main():
+    # 1. تهيئة الـ logging
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger(APP_NAME)
+    logger.info("Starting AI Reader System")
+
+    # 2. إنشاء EventBus
     bus = EventBus()
-    tts = TTS()
+
+    # 3. تحميل SessionStore
     session_store = SessionStore()
 
-    # Orchestrator + ModeManager
-    orchestrator = OfflineOrchestrator(bus, tts, session_store)
-    mode_manager = ModeManager(bus, orchestrator)  # online ممكن تضيفه لاحقًا
+    # 4. Mode Manager
+    mode_manager = ModeManager()
 
-    buttons = Buttons(bus)
-    camera = Camera(bus)
-    volume = Volume(bus)
+    # 5. تجهيز الخدمات الأساسية
+    camera = CameraService(bus)
+    vision = VisionService(bus)
+    audio = BeepService(bus)
 
-    print("\n--- Boot Sequence ---")
-    tts.speak("System check in progress...")
+    # ----------- تحديد المود عن طريق QR ----------
+    logger.info("Checking network mode via QR...")
+    first_frame = camera.capture_frame()
 
-    print("\n--- Network OFFLINE ---")
-    bus.emit(E.NET_STATUS, {"online": False})
+    if first_frame is not None:
+        qr_result = handle_frame(first_frame)
+        if qr_result and qr_result.get("network_ok"):  # لو فيه شبكة متاحة
+            logger.info("Network detected → Switching to ONLINE mode")
+            mode_manager.set_mode(True)
+        else:
+            logger.info("No network detected → Switching to OFFLINE mode")
+            mode_manager.set_mode(False)
+    else:
+        logger.warning("No frame captured, defaulting to OFFLINE mode")
+        mode_manager.set_mode(False)
 
-    print("\n--- Capture Image ---")
-    buttons.press_capture("short")
-    camera.capture(has_text=True)
+    # ----------- اختيار الـ orchestrator ----------
+    if mode_manager.get_mode():
+        orchestrator = OnlineOrchestrator(bus, session_store)
+    else:
+        orchestrator = OfflineOrchestrator(bus, session_store)
 
-    print("\n--- Network ONLINE ---")
-    bus.emit(E.NET_STATUS, {"online": True})
+    # ----------- ربط حدث الكابتشر ----------
+    def on_capture(_):
+        logger.info("Capture button pressed - taking image")
+        frame = camera.capture_frame()
+        if frame is not None:
+            result = handle_frame(frame)
+            logger.info(f"Frame processed, result: {result}")
+            orchestrator.on_frame_result(result)
 
-    print("\n--- Network OFFLINE Again ---")
-    bus.emit(E.NET_STATUS, {"online": False})
+    bus.subscribe(BTN_CAPTURE_SHORT, on_capture)
+
+    logger.info("System ready - waiting for events")
+
+    # ----------- loop أساسي ----------
+    try:
+        while True:
+            pass  # لاحقاً يمكن إضافة معالجة أحداث أو وظائف أخرى
+    except KeyboardInterrupt:
+        logger.info("Shutting down system...")
 
 if __name__ == "__main__":
     main()
