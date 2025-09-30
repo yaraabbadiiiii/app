@@ -6,9 +6,10 @@ from core.storge import SessionStore
 from mode.mode_manger import ModeManager
 from services.beep_service import BeepService
 from services.camera import Camera
-from services.vision.qr_detector import handle_frame
-
+from services.vision.qr_detector import classify_frame
 from connectivity.network import handle_frame
+
+
 from offline import OfflineOrchestrator
 from online import OnlineOrchestrator
 
@@ -65,4 +66,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
