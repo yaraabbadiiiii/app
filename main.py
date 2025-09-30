@@ -4,7 +4,7 @@ from core.config import APP_NAME
 from core.events import BTN_CAPTURE_SHORT
 from core.storge import SessionStore
 from mode.mode_manger import ModeManager
-from services.audio import BeepService
+from services.beep_service import BeepService
 from services.camera import Camera
 from services.vision import VisionService
 from connectivity.network import handle_frame
