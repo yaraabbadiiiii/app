@@ -5,7 +5,7 @@ from core.events import BTN_CAPTURE_SHORT
 from core.storge import SessionStore
 from mode.mode_manger import ModeManager
 from services.audio import BeepService
-from services.camera import CameraService
+from services.camera import Camera
 from services.vision import VisionService
 from connectivity.network import handle_frame
 from offline import OfflineOrchestrator
@@ -20,12 +20,12 @@ def main():
     session_store = SessionStore()
     mode_manager = ModeManager()
 
-    camera = CameraService(bus)
+    camera = Camera(bus)
     vision = VisionService(bus)
     audio = BeepService(bus)
 
     logger.info("Checking network mode via QR...")
-    first_frame = camera.capture_frame()
+    first_frame = camera.capture()
 
     if first_frame is not None:
         qr_result = handle_frame(first_frame)
@@ -46,7 +46,7 @@ def main():
 
     def on_capture(_):
         logger.info("Capture button pressed - taking image")
-        frame = camera.capture_frame()
+        frame = camera.capture()
         if frame is not None:
             result = handle_frame(frame)
             logger.info(f"Frame processed, result: {result}")
