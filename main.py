@@ -8,10 +8,10 @@ from services.beep_service import BeepService
 from services.camera import Camera
 from services.vision.qr_detector import classify_frame
 from connectivity.network import handle_frame
+from mode.online import Online
+from mode.offline import Offline
 
 
-from offline import OfflineOrchestrator
-from online import OnlineOrchestrator
 
 def main():
     logging.basicConfig(level=logging.INFO)
@@ -66,5 +66,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
