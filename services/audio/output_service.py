@@ -13,12 +13,12 @@ class OutputService:
 
     def play_tone(self, tone_type: str):
         tones = {
-            "capture_ok": "Beep ✅",
-            "mode_switch": "Beep 🔄",
-            "volume_step": "Beep 🔊",
-            "language_changed": "Beep 🌐",
+            "capture_ok": "Beep ",
+            "mode_switch": "Beep ",
+            "volume_step": "Beep ",
+            "language_changed": "Beep ",
         }
-        tone = tones.get(tone_type, "Beep ❓")
+        tone = tones.get(tone_type, "Beep ")
         self.logger.info(f"Playing tone: {tone_type}")
         print(f"[Tone] {tone}")
 
@@ -28,3 +28,4 @@ class OutputService:
         self.logger.info(msg)
         self.play_tone("language_changed")
         self.tts.speak(msg, self.feedback_lang)
+
