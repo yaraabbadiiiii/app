@@ -10,7 +10,7 @@ from services.vision.qr_detector import classify_frame
 from connectivity.network import handle_frame
 from mode.online import Online
 from mode.offline import Offline
-
+  
 
 
 def main():
@@ -66,6 +66,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
